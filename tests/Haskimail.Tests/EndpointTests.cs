@@ -194,6 +194,38 @@ public class EndpointTests
     }
 
     [Fact]
+    public async Task Templates_can_be_managed_with_account_key_only()
+    {
+        var (client, http) = TestClient.Create(o => o.ServerToken = null);
+
+        await client.Templates.ListAsync();
+        await client.Templates.GetAsync(4521);
+        await client.Templates.UpdateAsync(4521, new UpdateTemplateRequest());
+        await client.Templates.DeleteAsync("welcome");
+        await client.Templates.CreateAsync(new CreateTemplateRequest { Name = "Заказ", AssociatedServerId = 2459 });
+
+        Assert.Equal(5, http.Requests.Count);
+        Assert.All(http.Requests, r => Assert.Equal(TestClient.AccountToken, r.Header("X-Haskimail-Account-Token")));
+    }
+
+    [Fact]
+    public async Task Inbound_messages_require_server_key()
+    {
+        var (client, http) = TestClient.Create(o => o.ServerToken = null);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => client.Messages.SearchInboundAsync());
+        await Assert.ThrowsAsync<InvalidOperationException>(() => client.Messages.GetInboundDetailsAsync("22c7"));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => client.Messages.BypassInboundAsync("22c7"));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => client.Messages.RetryInboundAsync("22c7"));
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        {
+            await foreach (var _ in client.Messages.SearchInboundAllAsync()) { }
+        });
+
+        Assert.Empty(http.Requests); // запрос с ключом аккаунта сервер отклонил бы с 401
+    }
+
+    [Fact]
     public async Task Missing_required_key_fails_before_request()
     {
         var (accountOnly, http1) = TestClient.Create(o => o.ServerToken = null);

@@ -195,6 +195,22 @@ public class ContractTests
     }
 
     [Fact]
+    public async Task Zero_dates_are_treated_as_missing()
+    {
+        var (client, http) = TestClient.Create();
+        http.Respond("""{"Suppressions":[{"EmailAddress":"a@b.ru","SuppressionReason":"ManualSuppression","Origin":"Recipient","CreatedAt":"0000-00-00 00:00:00"},{"EmailAddress":"c@d.ru","CreatedAt":"2026-07-22 15:30:01"}]}""")
+            .Respond("""{"Days":[{"Date":"0000-00-00","Sent":1},{"Date":"2026-10-01","Sent":2}]}""");
+
+        var list = await client.Suppressions.ListAsync("2480");
+        var sends = await client.Stats.GetSentCountsAsync();
+
+        Assert.Null(list.Suppressions[0].CreatedAt);
+        Assert.NotNull(list.Suppressions[1].CreatedAt); // остальной ответ разобран
+        Assert.Equal(default, sends.Days[0].Date);
+        Assert.Equal(2, sends.Days[1].Sent);
+    }
+
+    [Fact]
     public async Task Template_validation()
     {
         var (client, http) = TestClient.Create();

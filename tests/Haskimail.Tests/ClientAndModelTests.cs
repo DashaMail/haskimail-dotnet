@@ -67,6 +67,35 @@ public class ClientTests
     }
 
     [Fact]
+    public async Task Update_template_with_delegate_does_not_escape_name_and_subject_again()
+    {
+        // Название и тема могут прийти экранированными (шаблоны, созданные через API старыми версиями сервера).
+        var (client, http) = TestClient.Create();
+        http.Respond("""{"TemplateId":7,"Name":"Счёт &amp; оплата &laquo;Плюс&raquo;","Subject":"Заказ &laquo;{{order}}&raquo; &mdash; оплачен","HtmlBody":"<p>&amp;</p>","TextBody":"t"}""")
+            .Respond("""{"TemplateId":7,"Name":"x"}""");
+
+        await client.Templates.UpdateAsync("7", t => t.TextBody = "новый текст");
+
+        var body = http.Requests[1].Json;
+        Assert.Equal("Счёт & оплата «Плюс»", body.GetProperty("Name").GetString());
+        Assert.Equal("Заказ «{{order}}» — оплачен", body.GetProperty("Subject").GetString());
+        Assert.Equal("<p>&amp;</p>", body.GetProperty("HtmlBody").GetString()); // тело сервер не экранирует — не трогаем
+        Assert.Equal("новый текст", body.GetProperty("TextBody").GetString());
+    }
+
+    [Fact]
+    public void Template_exposes_decoded_name_and_subject()
+    {
+        var template = new Template { Name = "A &amp; B", Subject = "&laquo;Привет&raquo;" };
+
+        Assert.Equal("A & B", template.DecodedName);
+        Assert.Equal("«Привет»", template.DecodedSubject);
+        Assert.Equal("A & B", UpdateTemplateRequest.FromTemplate(template).Name);
+        Assert.Equal("A & B", new TemplateSummary { Name = "A &amp; B" }.DecodedName);
+        Assert.Null(new Template().DecodedName);
+    }
+
+    [Fact]
     public async Task Update_template_with_delegate_reads_then_writes_all_fields_by_id()
     {
         var (client, http) = TestClient.Create();

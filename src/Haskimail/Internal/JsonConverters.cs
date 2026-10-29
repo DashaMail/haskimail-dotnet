@@ -31,8 +31,11 @@ namespace Haskimail.Internal
                 throw new JsonException($"Ожидалась строка с датой, получено {reader.TokenType}.");
 
             var text = reader.GetString();
-            return string.IsNullOrWhiteSpace(text) ? null : Parse(text!, AssumedOffset);
+            return string.IsNullOrWhiteSpace(text) || IsZeroDate(text!) ? null : Parse(text!, AssumedOffset);
         }
+
+        /// <summary>«Нулевая» дата MySQL (0000-00-00 00:00:00) означает «нет даты».</summary>
+        internal static bool IsZeroDate(string text) => text.TrimStart().StartsWith("0000-00-00", StringComparison.Ordinal);
 
         internal static DateTimeOffset Parse(string text, TimeSpan assumedOffset)
         {
@@ -65,6 +68,7 @@ namespace Haskimail.Internal
         public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             var text = reader.TokenType == JsonTokenType.String ? reader.GetString() : null;
+            if (text != null && MoscowDateTimeOffsetConverter.IsZeroDate(text)) return default;
             if (text != null && DateTime.TryParseExact(text.Trim(), "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
                 return date;
             if (text != null && DateTimeOffset.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.None, out var dto))

@@ -7,7 +7,10 @@ using Haskimail.Models;
 
 namespace Haskimail.Api
 {
-    /// <summary>Шаблоны писем и отправка по шаблонам.</summary>
+    /// <summary>
+    /// Шаблоны писем и отправка по шаблонам. Отправка — ключом сервера, перенос — ключом аккаунта;
+    /// остальные методы принимают любой ключ (с ключом аккаунта список включает шаблоны всех серверов).
+    /// </summary>
     public interface ITemplatesApi
     {
         /// <summary>Отправить письмо по шаблону (<c>POST /email/withTemplate</c>). Шаблон должен принадлежать серверу ключа (иначе 1101).</summary>
@@ -39,6 +42,8 @@ namespace Haskimail.Api
 
         /// <summary>
         /// Изменить часть полей: читает шаблон, применяет <paramref name="modify"/> и сохраняет все поля.
+        /// Название и тема могут прийти с сервера HTML-экранированными — перед сохранением они раскодируются,
+        /// иначе каждая правка экранировала бы их повторно (см. <see cref="UpdateTemplateRequest.FromTemplate"/>).
         /// </summary>
         Task<TemplateSummary> UpdateAsync(string templateIdOrAlias, Action<UpdateTemplateRequest> modify, CancellationToken cancellationToken = default);
 
@@ -95,7 +100,7 @@ namespace Haskimail.Api
             GetCoreAsync(Guard.PathSegment(templateIdOrAlias, nameof(templateIdOrAlias)), cancellationToken);
 
         private Task<Template> GetCoreAsync(string segment, CancellationToken cancellationToken) =>
-            _api.SendAsync(ApiCall.Get("/templates/" + segment, TokenType.Server), HaskimailJsonContext.Api.Template, cancellationToken);
+            _api.SendAsync(ApiCall.Get("/templates/" + segment, TokenType.ServerOrAccount), HaskimailJsonContext.Api.Template, cancellationToken);
 
         public Task<TemplateSummary> CreateAsync(CreateTemplateRequest request, CancellationToken cancellationToken = default)
         {
@@ -124,14 +129,14 @@ namespace Haskimail.Api
         private Task<TemplateSummary> UpdateCoreAsync(string segment, UpdateTemplateRequest request, CancellationToken cancellationToken)
         {
             Guard.NotNull(request, nameof(request));
-            return _api.SendAsync(ApiCall.Put("/templates/" + segment, TokenType.Server), request,
+            return _api.SendAsync(ApiCall.Put("/templates/" + segment, TokenType.ServerOrAccount), request,
                 HaskimailJsonContext.Api.UpdateTemplateRequest, HaskimailJsonContext.Api.TemplateSummary, cancellationToken);
         }
 
         public Task<TemplateList> ListAsync(int? count = null, int? offset = null, CancellationToken cancellationToken = default)
         {
             Guard.Paging(count, offset, int.MaxValue);
-            return _api.SendAsync(ApiCall.Get("/templates", TokenType.Server, new QueryBuilder().Add("count", count).Add("offset", offset)),
+            return _api.SendAsync(ApiCall.Get("/templates", TokenType.ServerOrAccount, new QueryBuilder().Add("count", count).Add("offset", offset)),
                 HaskimailJsonContext.Api.TemplateList, cancellationToken);
         }
 
@@ -150,7 +155,7 @@ namespace Haskimail.Api
             DeleteCoreAsync(Guard.PathSegment(templateId), cancellationToken);
 
         private Task<ApiResult> DeleteCoreAsync(string segment, CancellationToken cancellationToken) =>
-            _api.SendAsync(ApiCall.Delete("/templates/" + segment, TokenType.Server), HaskimailJsonContext.Api.ApiResult, cancellationToken);
+            _api.SendAsync(ApiCall.Delete("/templates/" + segment, TokenType.ServerOrAccount), HaskimailJsonContext.Api.ApiResult, cancellationToken);
 
         public Task<TemplateValidationResult> ValidateAsync(ValidateTemplateRequest request, CancellationToken cancellationToken = default)
         {

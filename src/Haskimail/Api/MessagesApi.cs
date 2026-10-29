@@ -7,8 +7,8 @@ using Haskimail.Models;
 namespace Haskimail.Api
 {
     /// <summary>
-    /// Отправленные и входящие письма, открытия и клики. С ключом сервера — данные своего сервера,
-    /// только с ключом аккаунта — всех серверов.
+    /// Отправленные и входящие письма, открытия и клики. Отправленные, открытия и клики доступны с ключом сервера
+    /// (данные своего сервера) или только с ключом аккаунта (данные всех серверов). Входящие письма — только с ключом сервера.
     /// </summary>
     public interface IMessagesApi
     {
@@ -41,13 +41,13 @@ namespace Haskimail.Api
         /// <summary>Клики одного письма за всё время (<c>GET /messages/clicks/{id}</c>).</summary>
         Task<MessageClickList> GetClicksForMessageAsync(string messageId, MessageEventFilter? filter = null, CancellationToken cancellationToken = default);
 
-        /// <summary>Входящие письма за последние 45 дней, новые первыми (<c>GET /messages/inbound</c>).</summary>
+        /// <summary>Входящие письма за последние 45 дней, новые первыми (<c>GET /messages/inbound</c>, ключ сервера).</summary>
         Task<InboundMessageList> SearchInboundAsync(InboundMessageSearch? search = null, CancellationToken cancellationToken = default);
 
         /// <summary>Все найденные входящие письма постранично.</summary>
         IAsyncEnumerable<InboundMessageSummary> SearchInboundAllAsync(InboundMessageSearch? search = null, CancellationToken cancellationToken = default);
 
-        /// <summary>Входящее письмо целиком, без содержимого вложений (<c>GET /messages/inbound/{id}/details</c>).</summary>
+        /// <summary>Входящее письмо целиком, без содержимого вложений (<c>GET /messages/inbound/{id}/details</c>, ключ сервера).</summary>
         Task<InboundMessageDetails> GetInboundDetailsAsync(string messageId, CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -196,20 +196,20 @@ namespace Haskimail.Api
                 .Add("status", search.Status?.ToString().ToLowerInvariant())
                 .AddDateTime("fromdate", search.FromDate, 'T')
                 .AddDateTime("todate", search.ToDate, 'T');
-            return _api.SendAsync(ApiCall.Get("/messages/inbound", TokenType.ServerOrAccount, query), HaskimailJsonContext.Api.InboundMessageList, cancellationToken);
+            return _api.SendAsync(ApiCall.Get("/messages/inbound", TokenType.Server, query), HaskimailJsonContext.Api.InboundMessageList, cancellationToken);
         }
 
         public Task<InboundMessageDetails> GetInboundDetailsAsync(string messageId, CancellationToken cancellationToken = default) =>
-            _api.SendAsync(ApiCall.Get($"/messages/inbound/{Guard.PathSegment(messageId, nameof(messageId))}/details", TokenType.ServerOrAccount),
+            _api.SendAsync(ApiCall.Get($"/messages/inbound/{Guard.PathSegment(messageId, nameof(messageId))}/details", TokenType.Server),
                 HaskimailJsonContext.Api.InboundMessageDetails, cancellationToken);
 
         // Повтор обхода или повторной доставки может отправить письмо на вебхук дважды — запросы неидемпотентны.
         public Task<ApiResult> BypassInboundAsync(string messageId, CancellationToken cancellationToken = default) =>
-            _api.SendAsync(ApiCall.Put($"/messages/inbound/{Guard.PathSegment(messageId, nameof(messageId))}/bypass", TokenType.ServerOrAccount, idempotent: false),
+            _api.SendAsync(ApiCall.Put($"/messages/inbound/{Guard.PathSegment(messageId, nameof(messageId))}/bypass", TokenType.Server, idempotent: false),
                 HaskimailJsonContext.Api.ApiResult, cancellationToken);
 
         public Task<ApiResult> RetryInboundAsync(string messageId, CancellationToken cancellationToken = default) =>
-            _api.SendAsync(ApiCall.Put($"/messages/inbound/{Guard.PathSegment(messageId, nameof(messageId))}/retry", TokenType.ServerOrAccount, idempotent: false),
+            _api.SendAsync(ApiCall.Put($"/messages/inbound/{Guard.PathSegment(messageId, nameof(messageId))}/retry", TokenType.Server, idempotent: false),
                 HaskimailJsonContext.Api.ApiResult, cancellationToken);
 
         /// <summary>count + offset ≤ 10 000 (по умолчанию count = 100) — иначе API вернёт ошибку 700.</summary>

@@ -11,10 +11,14 @@ namespace Haskimail.Models
         /// <summary>ID шаблона.</summary>
         public long TemplateId { get; set; }
 
-        /// <summary>Название. Используется как TemplateAlias.</summary>
+        /// <summary>
+        /// Название, как его вернул сервер. Используется как TemplateAlias.
+        /// Может прийти HTML-экранированным («&amp;amp;», «&amp;laquo;») — так бывает у шаблонов, созданных через API
+        /// старыми версиями сервера. Текст без экранирования — <see cref="DecodedName"/>.
+        /// </summary>
         public string? Name { get; set; }
 
-        /// <summary>Тема.</summary>
+        /// <summary>Тема, как её вернул сервер; может прийти HTML-экранированной, как и <see cref="Name"/>. Текст без экранирования — <see cref="DecodedSubject"/>.</summary>
         public string? Subject { get; set; }
 
         /// <summary>HTML-версия.</summary>
@@ -22,6 +26,14 @@ namespace Haskimail.Models
 
         /// <summary>Текстовая версия.</summary>
         public string? TextBody { get; set; }
+
+        /// <summary>Название без HTML-экранирования.</summary>
+        [JsonIgnore]
+        public string? DecodedName => Name is null ? null : System.Net.WebUtility.HtmlDecode(Name);
+
+        /// <summary>Тема без HTML-экранирования.</summary>
+        [JsonIgnore]
+        public string? DecodedSubject => Subject is null ? null : System.Net.WebUtility.HtmlDecode(Subject);
 
         /// <summary>ID сервера, которому принадлежит шаблон.</summary>
         public long? AssociatedServerId { get; set; }
@@ -33,8 +45,12 @@ namespace Haskimail.Models
         /// <summary>ID шаблона.</summary>
         public long TemplateId { get; set; }
 
-        /// <summary>Название шаблона.</summary>
+        /// <summary>Название шаблона, как его вернул сервер; может прийти HTML-экранированным.</summary>
         public string? Name { get; set; }
+
+        /// <summary>Название без HTML-экранирования.</summary>
+        [JsonIgnore]
+        public string? DecodedName => Name is null ? null : System.Net.WebUtility.HtmlDecode(Name);
     }
 
     /// <summary>Список шаблонов.</summary>
@@ -84,14 +100,19 @@ namespace Haskimail.Models
         /// <summary>Текстовая версия.</summary>
         public string TextBody { get; set; } = string.Empty;
 
-        /// <summary>Запрос со всеми полями текущего шаблона — удобная основа для изменения.</summary>
+        /// <summary>
+        /// Запрос со всеми полями текущего шаблона — удобная основа для изменения.
+        /// Название и тема берутся раскодированными (<see cref="Template.DecodedName"/>, <see cref="Template.DecodedSubject"/>):
+        /// они могут прийти с сервера экранированными, и без раскодирования каждая правка добавляла бы ещё один слой
+        /// («&amp;» → «&amp;amp;» → «&amp;amp;amp;»).
+        /// </summary>
         public static UpdateTemplateRequest FromTemplate(Template template)
         {
             Guard.NotNull(template, nameof(template));
             return new UpdateTemplateRequest
             {
-                Name = template.Name ?? string.Empty,
-                Subject = template.Subject ?? string.Empty,
+                Name = template.DecodedName ?? string.Empty,
+                Subject = template.DecodedSubject ?? string.Empty,
                 HtmlBody = template.HtmlBody ?? string.Empty,
                 TextBody = template.TextBody ?? string.Empty,
             };
