@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <!-- Имена тестов с подчёркиваниями, без ConfigureAwait и т.п. — правила для библиотек здесь не нужны. -->
+    <AnalysisLevel>latest-minimum</AnalysisLevel>
+    <NoWarn>$(NoWarn);CA1707;CA2007;CA1515;CA1861</NoWarn>
+  </PropertyGroup>
+
+  <!--
+    -p:HaskimailTestTarget=netstandard2.0 — прогнать те же тесты против сборки netstandard2.0
+    (ветки полифилов) на современном рантайме.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Haskimail\Haskimail.csproj" SetTargetFramework="TargetFramework=$(HaskimailTestTarget)" Condition="'$(HaskimailTestTarget)' != ''" />
+    <ProjectReference Include="..\..\src\Haskimail\Haskimail.csproj" Condition="'$(HaskimailTestTarget)' == ''" />
+    <ProjectReference Include="..\..\src\Haskimail.Extensions.DependencyInjection\Haskimail.Extensions.DependencyInjection.csproj" SetTargetFramework="TargetFramework=$(HaskimailTestTarget)" Condition="'$(HaskimailTestTarget)' != ''" />
+    <ProjectReference Include="..\..\src\Haskimail.Extensions.DependencyInjection\Haskimail.Extensions.DependencyInjection.csproj" Condition="'$(HaskimailTestTarget)' == ''" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
+  </ItemGroup>
+
+  <!-- При ссылке на netstandard2.0-сборку её зависимости не подтягиваются через SetTargetFramework — указываем явно. -->
+  <ItemGroup Condition="'$(HaskimailTestTarget)' == 'netstandard2.0'">
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <None Include="Fixtures\**\*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

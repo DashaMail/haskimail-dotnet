@@ -1,0 +1,35 @@
+{
+  "TotalCount": 71,
+  "Messages": [
+    {
+      "Recipient": "ivan@example.com",
+      "ReceivedAt": "2026-10-28 11:58:50",
+      "Tag": "fun-transactional",
+      "From": "sender@example.ru",
+      "MessageID": "32c5adc11df90c6d2a53a792dc6a22ea",
+      "Subject": "🛸 Вас выбрали для миссии на Марс (почти)",
+      "MessageStream": "2480",
+      "Status": "Sent"
+    },
+    {
+      "Recipient": "maria@example.com",
+      "ReceivedAt": "2026-10-28 11:58:07",
+      "Tag": "fun-transactional",
+      "From": "sender@example.ru",
+      "MessageID": "06b86a100cb369449805ce96b7102853",
+      "Subject": "🚀 Ваш заказ «Хорошее настроение» доставлен!",
+      "MessageStream": "2480",
+      "Status": "Sent"
+    },
+    {
+      "Recipient": "anna@example.com",
+      "ReceivedAt": "2026-10-24 19:04:00",
+      "Tag": "0",
+      "From": "sender@example.ru",
+      "MessageID": "ad4be617f4d2c621468484f425266373",
+      "Subject": "Кря! Письмо доставлено! 🦆📦",
+      "MessageStream": "2480",
+      "Status": "Sent"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "Recipient": "ivan@example.com",
+  "ReceivedAt": "2026-10-28 11:58:50",
+  "Tag": "fun-transactional",
+  "From": "sender@example.ru",
+  "MessageID": "32c5adc11df90c6d2a53a792dc6a22ea",
+  "Subject": "🛸 Вас выбрали для миссии на Марс (почти)",
+  "MessageStream": "2480",
+  "Status": "Sent"
+}

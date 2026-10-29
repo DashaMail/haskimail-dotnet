@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <!-- Пример не публикуется: «dotnet pack» по решению молча его пропускает. -->
+    <WarnOnPackingNonPackableProject>false</WarnOnPackingNonPackableProject>
+    <AnalysisLevel>latest-minimum</AnalysisLevel>
+    <!-- В примере логирование проще читать без LoggerMessage-генераторов. -->
+    <NoWarn>$(NoWarn);CA1873</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Haskimail\Haskimail.csproj" />
+    <ProjectReference Include="..\..\src\Haskimail.Extensions.DependencyInjection\Haskimail.Extensions.DependencyInjection.csproj" />
+  </ItemGroup>
+
+</Project>

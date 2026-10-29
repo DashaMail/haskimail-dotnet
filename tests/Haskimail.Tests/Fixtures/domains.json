@@ -1,0 +1,21 @@
+{
+  "TotalCount": 2,
+  "Domains": [
+    {
+      "ID": 126667,
+      "Name": "new.example.ru",
+      "DKIMVerified": false,
+      "WeakDKIM": false,
+      "SPFVerified": false,
+      "ReturnPathDomainVerified": false
+    },
+    {
+      "ID": 23779,
+      "Name": "example.ru",
+      "DKIMVerified": true,
+      "WeakDKIM": false,
+      "SPFVerified": true,
+      "ReturnPathDomainVerified": true
+    }
+  ]
+}

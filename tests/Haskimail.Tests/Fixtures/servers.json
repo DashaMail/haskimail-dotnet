@@ -1,0 +1,23 @@
+{
+  "TotalCount": 1,
+  "Servers": [
+    {
+      "ID": 2459,
+      "Name": "Мой первый сервер",
+      "Color": "blue",
+      "SmtpApiActivated": true,
+      "TrackOpens": false,
+      "TrackLinks": "None",
+      "DeliveryType": "Live",
+      "InboundHash": "2e0694a24470be488e9ec9b07f465a12",
+      "InboundHookUrl": "",
+      "InboundDomain": "",
+      "InboundSpamThreshold": 0,
+      "RawEmailEnabled": false,
+      "ApiTokens": [
+        "00000000-0000-0000-0000-000000000778"
+      ],
+      "InboundAddress": "2e0694a24470be488e9ec9b07f465a12@inbound.haskimail.ru"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- netstandard2.0 покрывает .NET Framework 4.6.2+, Mono, Unity; net8.0/net10.0 — современные среды без лишних зависимостей. -->
+    <TargetFrameworks>netstandard2.0;net8.0;net10.0</TargetFrameworks>
+    <!-- Сборка без доступа к NuGet: dotnet build -p:HaskimailOfflineBuild=true (только net8.0 и net10.0) -->
+    <TargetFrameworks Condition="'$(HaskimailOfflineBuild)' == 'true'">net8.0;net10.0</TargetFrameworks>
+    <!-- Офлайн доступен только ILLink из SDK 10 — для анализа AOT под net8.0 этого достаточно. -->
+    <NoWarn Condition="'$(HaskimailOfflineBuild)' == 'true'">$(NoWarn);NU1603</NoWarn>
+
+    <RootNamespace>Haskimail</RootNamespace>
+    <AssemblyName>Haskimail</AssemblyName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <PackageId>Haskimail.NET</PackageId>
+    <Description>.NET SDK для REST API Haskimail: отправка писем и пакетов, шаблоны, сообщения, возвраты, серверы, каналы, домены, статистика, вебхуки, правила для входящих и стоп-листы. AOT-совместим, без рефлексии, с безопасными повторами и автопагинацией.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <!-- Проверка, что API пакета одинаков во всех целевых платформах -->
+    <EnablePackageValidation>true</EnablePackageValidation>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' != 'netstandard2.0'">
+    <IsAotCompatible>true</IsAotCompatible>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <InternalsVisibleTo Include="Haskimail.Tests" />
+  </ItemGroup>
+
+</Project>
