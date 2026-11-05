@@ -48,6 +48,8 @@ namespace Haskimail.Internal
     [JsonSerializable(typeof(ServerList))]
     [JsonSerializable(typeof(CreateServerRequest))]
     [JsonSerializable(typeof(UpdateServerRequest))]
+    [JsonSerializable(typeof(IssueServerTokenRequest))]
+    [JsonSerializable(typeof(ServerToken))]
     // Каналы
     [JsonSerializable(typeof(MessageStream))]
     [JsonSerializable(typeof(MessageStreamList))]

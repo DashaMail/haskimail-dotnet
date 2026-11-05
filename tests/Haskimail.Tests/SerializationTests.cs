@@ -94,7 +94,7 @@ public class SerializationTests
 
         await client.Servers.CreateAsync(new CreateServerRequest { Name = "Магазин", TrackLinks = LinkTrackingMode.HtmlAndText, DeliveryType = DeliveryType.Sandbox, InboundSpamThreshold = 10 });
         var create = http.Last.Json;
-        await client.Servers.UpdateAsync(1, new UpdateServerRequest { Color = ServerColor.Green, EnableSmtpApiErrorHooks = true });
+        await client.Servers.UpdateAsync(1, new UpdateServerRequest { Color = ServerColor.Green, RawEmailEnabled = true });
         var update = http.Last.Json;
 
         Assert.Equal("purple", create.GetProperty("Color").GetString());
@@ -104,9 +104,28 @@ public class SerializationTests
         Assert.False(create.TryGetProperty("SmtpApiActivated", out _));
 
         Assert.Equal("green", update.GetProperty("Color").GetString());
-        Assert.True(update.GetProperty("EnableSmtpApiErrorHooks").GetBoolean());
+        Assert.True(update.GetProperty("RawEmailEnabled").GetBoolean());
         Assert.False(update.TryGetProperty("Name", out _));
         Assert.False(update.TryGetProperty("TrackLinks", out _));
+    }
+
+    [Fact]
+    public async Task Server_token_is_issued_with_optional_name()
+    {
+        var (client, http) = TestClient.Create();
+        http.Respond("""{"Token":"abc-123","ServerId":11834}""");
+
+        var withName = await client.Servers.IssueTokenAsync(11834, new IssueServerTokenRequest { Name = "Интеграция 1С" });
+        Assert.Equal(HttpMethod.Post, http.Last.Method);
+        Assert.Equal("/servers/11834/tokens/new", http.Last.PathAndQuery);
+        Assert.Equal("Интеграция 1С", http.Last.Json.GetProperty("Name").GetString());
+        Assert.Equal("abc-123", withName.Token);
+        Assert.Equal(11834, withName.ServerId);
+
+        http.Respond("""{"Token":"def-456","ServerId":11834}""");
+        var withoutName = await client.Servers.IssueTokenAsync(11834);
+        Assert.Equal("/servers/11834/tokens/new", http.Last.PathAndQuery);
+        Assert.Equal("def-456", withoutName.Token);
     }
 
     [Fact]

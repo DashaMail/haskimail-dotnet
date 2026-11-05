@@ -75,6 +75,7 @@ public class EndpointTests
         new("IServersApi.UpdateAsync(Int64,UpdateServerRequest)", "PUT", "/servers/2459", A, "{}", c => c.Servers.UpdateAsync(2459, new UpdateServerRequest { Name = "Новое" })),
         new("IServersApi.ListAsync(Int32?,Int32?)", "GET", "/servers?count=50", A, "{}", c => c.Servers.ListAsync(50)),
         new("IServersApi.DeleteAsync(Int64)", "DELETE", "/servers/2459", A, "{}", c => c.Servers.DeleteAsync(2459)),
+        new("IServersApi.IssueTokenAsync(Int64,IssueServerTokenRequest)", "POST", "/servers/2459/tokens/new", A, "{}", c => c.Servers.IssueTokenAsync(2459)),
 
         // Каналы
         new("IMessageStreamsApi.ListAsync()", "GET", "/message-streams", S, "{}", c => c.MessageStreams.ListAsync()),
@@ -174,8 +175,8 @@ public class EndpointTests
         var covered = All.Select(e => e.Signature).OrderBy(s => s, StringComparer.Ordinal).ToArray();
 
         Assert.Equal(api, covered);
-        // 61 метод справочника API Haskimail + у шаблонов Get/Update/Delete есть перегрузки по ID и по названию.
-        Assert.Equal(61 + 3, covered.Length);
+        // 62 метод справочника API Haskimail + у шаблонов Get/Update/Delete есть перегрузки по ID и по названию.
+        Assert.Equal(62 + 3, covered.Length);
     }
 
     [Fact]

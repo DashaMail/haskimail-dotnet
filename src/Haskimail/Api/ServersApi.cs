@@ -27,6 +27,9 @@ namespace Haskimail.Api
 
         /// <summary>Удалить сервер вместе с правилами для входящих (<c>DELETE /servers/{id}</c>).</summary>
         Task<ApiResult> DeleteAsync(long serverId, CancellationToken cancellationToken = default);
+
+        /// <summary>Выпустить дополнительный серверный ключ (<c>POST /servers/{id}/tokens/new</c>). Значение ключа показывается один раз.</summary>
+        Task<ServerToken> IssueTokenAsync(long serverId, IssueServerTokenRequest? request = null, CancellationToken cancellationToken = default);
     }
 
     internal sealed class ServersApi : IServersApi
@@ -73,6 +76,15 @@ namespace Haskimail.Api
 
         public Task<ApiResult> DeleteAsync(long serverId, CancellationToken cancellationToken = default) =>
             _api.SendAsync(ApiCall.Delete("/servers/" + Guard.PathSegment(serverId), TokenType.Account), HaskimailJsonContext.Api.ApiResult, cancellationToken);
+
+        public Task<ServerToken> IssueTokenAsync(long serverId, IssueServerTokenRequest? request = null, CancellationToken cancellationToken = default)
+        {
+            // Выпуск ключа не идемпотентен: повтор после сетевого сбоя дал бы ещё один ключ.
+            var call = ApiCall.Post("/servers/" + Guard.PathSegment(serverId) + "/tokens/new", TokenType.Account);
+            return request is null
+                ? _api.SendAsync(call, HaskimailJsonContext.Api.ServerToken, cancellationToken)
+                : _api.SendAsync(call, request, HaskimailJsonContext.Api.IssueServerTokenRequest, HaskimailJsonContext.Api.ServerToken, cancellationToken);
+        }
 
         private static void ValidateThreshold(int? threshold, string paramName)
         {

@@ -2,6 +2,19 @@
 
 Формат — [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/), версии — [SemVer](https://semver.org/lang/ru/).
 
+## [Не выпущено]
+
+### Добавлено
+
+- `IServersApi.IssueTokenAsync(serverId, request?)` — выпуск дополнительного серверного
+  API-ключа (`POST /servers/{id}/tokens/new`); открытое значение ключа возвращается один раз.
+  Необязательное `IssueServerTokenRequest.Name` — название ключа.
+
+### Удалено
+
+- `EnableSmtpApiErrorHooks` из запросов создания/изменения сервера — поле отсутствует в API
+  и игнорировалось.
+
 ## [1.0.1] — 2026-10-30
 
 ### Исправлено

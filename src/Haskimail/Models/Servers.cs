@@ -110,10 +110,23 @@ namespace Haskimail.Models
 
         /// <summary>Новый цвет.</summary>
         public ServerColor? Color { get; set; }
+    }
 
-        /// <summary>
-        /// Уведомлять об ошибках SMTP API — попытках отправить через SMTP на адрес из стоп-листа.
-        /// </summary>
-        public bool? EnableSmtpApiErrorHooks { get; set; }
+    /// <summary>Запрос выпуска дополнительного серверного ключа (<c>POST /servers/{id}/tokens/new</c>).</summary>
+    public sealed class IssueServerTokenRequest
+    {
+        /// <summary>Необязательное название ключа, например «Интеграция 1С».</summary>
+        public string? Name { get; set; }
+    }
+
+    /// <summary>Выпущенный серверный ключ. Открытое значение показывается только один раз.</summary>
+    public sealed class ServerToken
+    {
+        /// <summary>Открытое значение серверного API-ключа.</summary>
+        public string Token { get; set; } = string.Empty;
+
+        /// <summary>ID сервера, которому принадлежит ключ.</summary>
+        [JsonPropertyName("ServerId")]
+        public long ServerId { get; set; }
     }
 }
