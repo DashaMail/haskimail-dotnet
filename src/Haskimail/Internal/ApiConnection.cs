@@ -266,10 +266,22 @@ namespace Haskimail.Internal
                                         ?? throw new InvalidOperationException("Для этого метода нужен ключ сервера: задайте HaskimailClientOptions.ServerToken.")),
                 TokenType.Account => (AccountTokenHeader, _options.AccountToken
                                         ?? throw new InvalidOperationException("Для этого метода нужен ключ аккаунта: задайте HaskimailClientOptions.AccountToken.")),
-                _ => _options.ServerToken != null
-                                        ? (ServerTokenHeader, _options.ServerToken)
-                                        : (AccountTokenHeader, _options.AccountToken!),
+                _ => ResolveFlexibleToken(),
             };
+        }
+
+        private (string Header, string Value) ResolveFlexibleToken()
+        {
+            if (_options.PreferAccountToken && !string.IsNullOrWhiteSpace(_options.AccountToken))
+                return (AccountTokenHeader, _options.AccountToken!);
+
+            if (!string.IsNullOrWhiteSpace(_options.ServerToken))
+                return (ServerTokenHeader, _options.ServerToken!);
+
+            if (!string.IsNullOrWhiteSpace(_options.AccountToken))
+                return (AccountTokenHeader, _options.AccountToken!);
+
+            throw new InvalidOperationException("Для этого метода нужен ключ сервера или ключ аккаунта: задайте HaskimailClientOptions.ServerToken или AccountToken.");
         }
 
         private static string BuildUserAgent(string? suffix)

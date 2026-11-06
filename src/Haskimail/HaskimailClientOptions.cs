@@ -37,6 +37,13 @@ namespace Haskimail
         /// </summary>
         public bool ValidateRequests { get; set; } = true;
 
+        /// <summary>
+        /// Для методов, которые принимают и серверный, и аккаунтный ключ,
+        /// предпочитать ключ аккаунта (данные по всем серверам) вместо ключа сервера.
+        /// По умолчанию — false: если задан серверный ключ, используется он.
+        /// </summary>
+        public bool PreferAccountToken { get; set; }
+
         /// <summary>Дополнение к заголовку User-Agent, например название вашего приложения.</summary>
         public string? UserAgentSuffix { get; set; }
 
@@ -60,6 +67,7 @@ namespace Haskimail
                 Timeout = Timeout,
                 Retry = retry.Clone(),
                 ValidateRequests = ValidateRequests,
+                PreferAccountToken = PreferAccountToken,
                 UserAgentSuffix = UserAgentSuffix,
             };
         }

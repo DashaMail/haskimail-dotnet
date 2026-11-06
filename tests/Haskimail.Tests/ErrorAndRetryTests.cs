@@ -32,18 +32,50 @@ public class ErrorAndRetryTests
         Assert.Contains("[GET /templates]", ex.Message);
     }
 
-    [Fact]
-    public async Task Send_rejection_422_carries_error_code()
-    {
-        var (client, http) = TestClient.Create();
-        http.Respond((HttpStatusCode)422, """{"ErrorCode":1226,"Message":"MessageStream doesn't match api key"}""");
+    [Theory]
+      [InlineData(404, 0)]
+      [InlineData(422, HaskimailErrorCodes.NotFoundOrIncompleteRequest)]
+      [InlineData(422, HaskimailErrorCodes.DomainOrServerNotFound)]
+      [InlineData(422, HaskimailErrorCodes.MessageNotFound)]
+      [InlineData(422, HaskimailErrorCodes.InboundRuleNotFound)]
+      [InlineData(422, HaskimailErrorCodes.TemplateNotFound)]
+      [InlineData(422, HaskimailErrorCodes.MessageStreamNotFound)]
+      public async Task IsNotFound_recognises_both_http_404_and_not_found_error_codes(int status, int errorCode)
+      {
+          var (client, http) = TestClient.Create(o => o.Retry = HaskimailRetryOptions.None);
+          var body = errorCode == 0 ? "" : "{\"ErrorCode\":" + errorCode + ",\"Message\":\"x\"}";
+          http.Respond((HttpStatusCode)status, body);
 
-        var ex = await Assert.ThrowsAsync<HaskimailValidationException>(() => client.Email.SendAsync(Mail));
+          var ex = await Assert.ThrowsAnyAsync<HaskimailApiException>(() => client.Messages.GetOutboundDetailsAsync("m"));
 
-        Assert.Equal(HaskimailErrorCodes.MessageStreamNotFound, ex.ErrorCode);
-        Assert.False(ex.IsTransient);
-        Assert.Single(http.Requests); // 422 не повторяется
-    }
+          Assert.Equal(status, (int)ex.StatusCode);
+          Assert.Equal(errorCode, ex.ErrorCode);
+          Assert.True(ex.IsNotFound);
+      }
+
+      [Fact]
+      public async Task IsNotFound_is_false_for_other_codes()
+      {
+          var (client, http) = TestClient.Create(o => o.Retry = HaskimailRetryOptions.None);
+          http.Respond((HttpStatusCode)422, """{"ErrorCode":6,"Message":"bad address"}""");
+
+          var ex = await Assert.ThrowsAsync<HaskimailValidationException>(() => client.Email.SendAsync(Mail));
+
+          Assert.False(ex.IsNotFound);
+      }
+
+      [Fact]
+      public async Task Send_rejection_422_carries_error_code()
+      {
+          var (client, http) = TestClient.Create();
+          http.Respond((HttpStatusCode)422, """{"ErrorCode":1226,"Message":"MessageStream doesn't match api key"}""");
+
+          var ex = await Assert.ThrowsAsync<HaskimailValidationException>(() => client.Email.SendAsync(Mail));
+
+          Assert.Equal(HaskimailErrorCodes.MessageStreamNotFound, ex.ErrorCode);
+          Assert.False(ex.IsTransient);
+          Assert.Single(http.Requests); // 422 не повторяется
+      }
 
     [Fact]
     public async Task Non_json_error_body_is_preserved()

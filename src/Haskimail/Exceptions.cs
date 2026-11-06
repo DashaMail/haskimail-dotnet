@@ -64,6 +64,20 @@ namespace Haskimail
             ErrorCode == HaskimailErrorCodes.TemporarySendingError ||
             ErrorCode == HaskimailErrorCodes.InternalError;
 
+        /// <summary>
+        /// Запрошенный объект не найден: HTTP 404 или один из кодов «не найдено»
+        /// (12, 510, 701, 812, 1101, 1226). Haskimail сообщает об отсутствии объекта
+        /// таким кодом и при HTTP 422, поэтому одного статуса недостаточно.
+        /// </summary>
+        public bool IsNotFound =>
+            StatusCode == HttpStatusCode.NotFound || ErrorCode is
+                HaskimailErrorCodes.NotFoundOrIncompleteRequest or
+                HaskimailErrorCodes.DomainOrServerNotFound or
+                HaskimailErrorCodes.MessageNotFound or
+                HaskimailErrorCodes.InboundRuleNotFound or
+                HaskimailErrorCodes.TemplateNotFound or
+                HaskimailErrorCodes.MessageStreamNotFound;
+
         internal static bool IsTransientStatus(HttpStatusCode status)
         {
             var code = (int)status;

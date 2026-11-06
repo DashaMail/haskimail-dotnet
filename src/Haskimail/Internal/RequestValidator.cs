@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using Haskimail.Models;
 
@@ -18,7 +19,8 @@ namespace Haskimail.Internal
         public const int MaxSubjectLength = 2000;
         public const int MaxTagLength = 1000;
         public const int MaxBodyBytes = 5 * 1024 * 1024;
-        public const int MaxAttachmentsBase64Bytes = 10 * 1024 * 1024;
+        /// <summary>Размер всего письма: тело плюс вложения после Base64.</summary>
+        public const int MaxMessageBytes = 10 * 1024 * 1024;
 
         public static void ValidateMessage(EmailMessageBase message, bool deep, int? index = null)
         {
@@ -65,9 +67,21 @@ namespace Haskimail.Internal
                     Require(header != null && !string.IsNullOrWhiteSpace(header.Name), where + "у заголовка в Headers не задано имя.");
             }
 
+            long messageBytes = 0;
+            switch (message)
+            {
+                case EmailMessage plain:
+                    messageBytes += Encoding.UTF8.GetByteCount(plain.HtmlBody ?? string.Empty);
+                    messageBytes += Encoding.UTF8.GetByteCount(plain.TextBody ?? string.Empty);
+                    break;
+                case TemplatedEmailMessage templated when templated.TemplateModel != null:
+                    messageBytes += templated.TemplateModel.Sum(pair => Encoding.UTF8.GetByteCount(pair.Key) + Encoding.UTF8.GetByteCount(pair.Value));
+                    break;
+            }
+
             if (message.Attachments != null)
             {
-                long total = 0;
+                long base64Bytes = 0;
                 foreach (var attachment in message.Attachments)
                 {
                     Require(attachment != null, where + "вложение равно null.");
@@ -76,10 +90,12 @@ namespace Haskimail.Internal
                     var extension = Path.GetExtension(attachment.Name).TrimStart('.');
                     Require(extension.Length == 0 || !Attachment.IsForbiddenExtension(extension),
                         where + $"вложение «{attachment.Name}»: тип .{extension} запрещён в Haskimail.");
-                    total += attachment.Content?.Length ?? 0;
+                    base64Bytes += attachment.Content?.Length ?? 0;
                 }
-                Require(total <= MaxAttachmentsBase64Bytes, where + $"вложения после Base64 занимают {total / 1024.0 / 1024.0:0.##} МБ, допускается не больше 10 МБ.");
+                messageBytes += base64Bytes;
             }
+
+            Require(messageBytes <= MaxMessageBytes, where + $"всё письмо (тело и вложения после Base64) занимает {messageBytes / 1024.0 / 1024.0:0.##} МБ, допускается не больше 10 МБ.");
         }
 
         public static List<T> ValidateBatch<T>(IEnumerable<T> messages, bool deep) where T : EmailMessageBase

@@ -103,16 +103,40 @@ public class ValidationTests
     }
 
     [Fact]
-    public async Task Attachments_over_ten_megabytes_after_base64()
-    {
-        var m = Valid();
-        m.Attachments =
-        [
-            new Attachment { Name = "a.pdf", ContentType = "application/pdf", Content = new string('A', 6 * 1024 * 1024) },
-            new Attachment { Name = "b.pdf", ContentType = "application/pdf", Content = new string('A', 5 * 1024 * 1024) },
-        ];
-        Assert.Contains("10 МБ", (await Rejects(m)).Message);
-    }
+      public async Task Attachments_over_ten_megabytes_after_base64()
+      {
+          var m = Valid();
+          m.Attachments =
+          [
+              new Attachment { Name = "a.pdf", ContentType = "application/pdf", Content = new string('A', 6 * 1024 * 1024) },
+              new Attachment { Name = "b.pdf", ContentType = "application/pdf", Content = new string('A', 5 * 1024 * 1024) },
+          ];
+          Assert.Contains("10 МБ", (await Rejects(m)).Message);
+      }
+
+      [Fact]
+      public async Task Whole_message_over_ten_megabytes_counted_together_with_the_body()
+      {
+          var m = Valid();
+          // 6 МБ текста (в пределах лимита тела 5 МБ? нет — превышает, поэтому текст короче).
+          m.TextBody = new string('ж', 3 * 1024 * 1024); // 6 МБ — сам по себе уже над лимитом тела
+          m.Attachments = [new Attachment { Name = "a.pdf", ContentType = "application/pdf", Content = new string('A', 4 * 1024 * 1024) + "==" }];
+          // Тело (6 МБ) само по себе превышает 5 МБ, поэтому отвергается как тело.
+          Assert.Contains("TextBody", (await Rejects(m)).Message);
+
+          // Тело и вложения порознь в пределах лимитов, но вместе — больше 10 МБ.
+          var combined = Valid();
+          combined.TextBody = new string('ж', 2 * 1024 * 1024); // 4 МБ текста
+          combined.Attachments =
+          [
+              new Attachment { Name = "a.pdf", ContentType = "application/pdf", Content = new string('A', 4 * 1024 * 1024) },
+              new Attachment { Name = "b.pdf", ContentType = "application/pdf", Content = new string('A', 3 * 1024 * 1024) },
+          ];
+          var ex = await Rejects(combined);
+          Assert.Contains("10 МБ", ex.Message);
+          Assert.DoesNotContain("HtmlBody", ex.Message);
+          Assert.DoesNotContain("TextBody", ex.Message);
+      }
 
     [Fact]
     public async Task Header_without_name()
