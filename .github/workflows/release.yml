@@ -1,0 +1,72 @@
+name: Release
+
+# Publishes both NuGet packages when a version tag (v1.2.3) is pushed.
+# Requires the repository secret NUGET_API_KEY (nuget.org, scope "Push new
+# packages and package versions", glob "Haskimail.*").
+#
+# Alternatively, replace the push steps with nuget.org Trusted Publishing
+# (NuGet/login@v1 + id-token: write); see RELEASE.md in the release bundle.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish to NuGet
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: release
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Tag is on main
+        run: |
+          git fetch --no-tags origin main
+          git merge-base --is-ancestor "$GITHUB_SHA" FETCH_HEAD
+
+      - name: Tag matches the package version
+        id: version
+        run: |
+          VERSION=$(dotnet msbuild src/Haskimail/Haskimail.csproj -getProperty:Version -nologo)
+          test "v$VERSION" = "$GITHUB_REF_NAME"
+          echo "value=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Test
+        run: dotnet test -c Release --filter "Category!=Live"
+
+      - name: Pack
+        run: dotnet pack -c Release -o artifacts
+
+      - name: Push Haskimail.NET
+        run: >
+          dotnet nuget push "artifacts/Haskimail.NET.${{ steps.version.outputs.value }}.nupkg"
+          --source https://api.nuget.org/v3/index.json
+          --api-key "${{ secrets.NUGET_API_KEY }}"
+          --symbol-source https://api.nuget.org/v3/index.json
+          --symbol-api-key "${{ secrets.NUGET_API_KEY }}"
+          --skip-duplicate
+
+      - name: Push Haskimail.NET.Extensions.DependencyInjection
+        run: >
+          dotnet nuget push
+          "artifacts/Haskimail.NET.Extensions.DependencyInjection.${{ steps.version.outputs.value }}.nupkg"
+          --source https://api.nuget.org/v3/index.json
+          --api-key "${{ secrets.NUGET_API_KEY }}"
+          --symbol-source https://api.nuget.org/v3/index.json
+          --symbol-api-key "${{ secrets.NUGET_API_KEY }}"
+          --skip-duplicate

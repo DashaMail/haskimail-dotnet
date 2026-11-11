@@ -19,6 +19,14 @@
 | `Haskimail.NET.Extensions.DependencyInjection` | `services.AddHaskimail(...)` для ASP.NET Core и Generic Host. |
 
 ```bash
+dotnet add package Haskimail.NET
+dotnet add package Haskimail.NET.Extensions.DependencyInjection
+```
+
+Пакеты публикуются на [nuget.org](https://www.nuget.org/packages/Haskimail.NET).
+Для сборки из исходников:
+
+```bash
 dotnet pack -c Release -o ./nupkg
 dotnet add package Haskimail.NET --source ./nupkg
 dotnet add package Haskimail.NET.Extensions.DependencyInjection --source ./nupkg
